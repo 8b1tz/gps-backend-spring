@@ -1,5 +1,6 @@
 package br.com.ifpb.gpsback.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,30 +29,31 @@ public class UsuarioController {
 	@Autowired
 	private TaskRepository taskRepository;
 
-	// CREATE
+	// CRIAR USUARIO
 	@PostMapping("criarusuario")
 	public void novo(@RequestBody Usuario usuario) {
 		usuarioRepository.save(usuario);
 	}
 
-	// READ ALL
+	// LER TODOS USUARIOS
 	@GetMapping("listarusuarios")
 	public List<Usuario> findAll() {
 		return usuarioRepository.findAll();
 	}
 
-	// READ
-	@GetMapping(path = { "/{id}" })
-	public ResponseEntity findById(@PathVariable long id) {
-		return usuarioRepository.findById(id).map(record -> ResponseEntity.ok().body(record))
-				.orElse(ResponseEntity.notFound().build());
+	// LER USUARIO ESPECIFICO
+	@GetMapping(path = { "lerusuario/{idusu}" })
+	public List<Usuario> findById(@PathVariable long idusu) {
+		List<Usuario> usuarios = new ArrayList<>();
+		usuarioRepository.findById(idusu).map(u -> usuarios.add(u));
+		return usuarios;
 	}
 
-	// UPDATE
-	@PutMapping(value = "/{id}")
-	public ResponseEntity update(@PathVariable("id") long id, @RequestBody Usuario usuario) {
+	// ATUALIZAR USUARIO
+	@PutMapping(value = "atualizarusuario/{idusu}")
+	public ResponseEntity update(@PathVariable long idusu, @RequestBody Usuario usuario) {
 
-		Usuario usuarioDb = usuarioRepository.findById(id).get();
+		Usuario usuarioDb = usuarioRepository.findById(idusu).get();
 
 		usuarioDb.setEmail(usuario.getEmail());
 		usuarioDb.setName(usuario.getName());
@@ -61,23 +63,55 @@ public class UsuarioController {
 
 	}
 
-	// DELETE
-	@DeleteMapping(path = { "/{id}" })
-	public ResponseEntity<?> delete(@PathVariable long id) {
-		return usuarioRepository.findById(id).map(record -> {
-			usuarioRepository.deleteById(id);
+	// DELETAR USUARIO
+	@DeleteMapping(path = { "deletarusuario/{idusu}" })
+	public ResponseEntity<?> delete(@PathVariable long idusu) {
+		return usuarioRepository.findById(idusu).map(record -> {
+			usuarioRepository.deleteById(idusu);
 			return ResponseEntity.ok().build();
 		}).orElse(ResponseEntity.notFound().build());
 	}
 
-	@PostMapping("adicionartask/{id}")
-	public String adicionarTaskEmUsuario(@PathVariable long id, @RequestBody Task task) {
-		Usuario usuarioDb = usuarioRepository.findById(id).get();
-		task.setUsuario(usuarioDb);
-		usuarioDb.adicionarTask(task);
-		taskRepository.save(task);
-		usuarioRepository.save(usuarioDb);
-		return "task adicionada com sucesso!";
+	// ADICIONAR TASK EM USUARIO
+	@PostMapping("adicionartask/{idusu}")
+	public ResponseEntity adicionarTaskEmUsuario(@PathVariable long idusu, @RequestBody Task task) {
+		return usuarioRepository.findById(idusu).map(u -> {
+			task.setUsuario(u);
+			u.adicionarTask(task);
+			taskRepository.save(task);
+			usuarioRepository.save(u);
+			return ResponseEntity.ok().build();
+		}).orElse(ResponseEntity.notFound().build());
 	}
 
+	// DELETAR TASK ESPECIFICA DO USUARIO ESPECIFICO
+	@DeleteMapping(path = { "{idusu}/removertask/{id}" })
+	public ResponseEntity delete(@PathVariable long idusu, @PathVariable long id) {
+		return usuarioRepository.findById(idusu).map(u -> {
+			u.removerTask(taskRepository.getById(id));
+			taskRepository.delete(taskRepository.getById(id));
+			return ResponseEntity.ok().build();
+		}).orElse(ResponseEntity.notFound().build());
+	}
+
+	// LER TASK DO USUARIO
+	@GetMapping(path = { "/{idusu}/tasks" })
+	public List<Task> findById1(@PathVariable long idusu) {
+		return usuarioRepository.findById(idusu).get().getTasks();
+	}
+
+	// ATUALIZAR TASK ESPECIFICA DE USUARIO ESPECIFICO
+	@PutMapping(value = "{idusu}/atualizartask/{id}")
+	public void update(@PathVariable long idusu, @PathVariable long id, @RequestBody Task task) {
+
+		List<Task> taskUsuario = usuarioRepository.findById(idusu).get().getTasks();
+		taskUsuario.forEach(t -> {
+			t.setDate(task.getDate());
+			t.setDescription(task.getDescription());
+			t.setStatus(task.getStatus());
+			t.setTitle(task.getTitle());
+			taskRepository.save(t);
+		});
+
+	}
 }

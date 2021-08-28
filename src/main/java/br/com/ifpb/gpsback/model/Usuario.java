@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.CascadeType;
-import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 public class Usuario {
@@ -24,14 +26,18 @@ public class Usuario {
 
 	private String email;
 
-	@Column(name = "task")
-	@OneToMany(mappedBy = "usuario", cascade={CascadeType.PERSIST,CascadeType.MERGE})
+	@OneToMany(mappedBy = "usuario", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JsonManagedReference
 	private List<Task> tasks = new ArrayList<>();
 
-	@Override
-	public String toString() {
-		return "Usuario [id= " + id + "," + " name= " + name + "," + " password= " + password + "," + " email= " + email
-				+ "]";
+	public Usuario() {
+
+	}
+
+	public Usuario(String name, String password, String email) {
+		this.name = name;
+		this.password = password;
+		this.email = email;
 	}
 
 	public String getName() {
@@ -60,6 +66,10 @@ public class Usuario {
 
 	public Long getId() {
 		return id;
+	}
+
+	public List<Task> getTasks() {
+		return tasks;
 	}
 
 	public void adicionarTask(Task task) {

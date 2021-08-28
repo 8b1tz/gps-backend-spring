@@ -1,16 +1,20 @@
 package br.com.ifpb.gpsback.model;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 public class Task {
 
-	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
 	private String title;
@@ -20,10 +24,11 @@ public class Task {
 	private String status;
 
 	private String date;
-	
-	@ManyToOne
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JsonBackReference
 	private Usuario usuario;
-	
+
 	public Task() {
 	}
 
